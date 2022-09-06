@@ -1,0 +1,37 @@
+version: "3.9"
+services:
+  postgres: # How to enter from shell? > psql -h localhost -p 5442 -U admin -d filosofo
+    image: postgres:14.5-alpine
+    restart: always
+    networks:
+    - network_db
+    volumes:
+    - volume_db
+    ports:
+    - "5442:5432"
+    environment:
+    - "POSTGRES_USER=admin"
+    - "POSTGRES_PASSWORD=admin"
+    - "POSTGRES_DB=filosofo"
+  pgadmin:
+    image: dpage/pgadmin4:6
+    environment:
+    - "PGADMIN_DEFAULT_EMAIL=admin@mail.com"
+    - "PGADMIN_DEFAULT_PASSWORD=admin"
+    networks:
+    - network_db
+    ports:
+    - "8080:80"
+    depends_on:
+    - postgres
+networks:
+  network_db:
+    name: network_db
+    external: false
+    labels:
+    - 'network.philosopherplbot'
+volumes:
+  volume_db:
+    name: volume_db
+    driver: local
+    external: false
