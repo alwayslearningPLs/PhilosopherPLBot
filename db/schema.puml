@@ -1,0 +1,75 @@
+@startuml pl
+
+hide circle
+skinparam linetype ortho
+
+legend top left
+  pl -> Programming Language
+endlegend
+
+entity languages {
+  * id : number <<generated>>
+  * name : text
+}
+
+entity pl_level {
+  * id : number <<generated>>
+  * name : text <<unique>>
+  --
+  * description : text
+}
+
+entity pl_mode_execution {
+  * id : number <<generated>>
+  * name : text <<unique>>
+  --
+  * description : text
+}
+
+entity pl_resource_type {
+  * id : number <<generated>>
+  * name : text <<unique>>
+}
+
+entity pl_category {
+  * id : number <<generated>>
+  * name : text <<unique>>
+  --
+  * description : text
+}
+
+entity pl_resource {
+  * id : number <<generated>>
+  * value : text <<unique>>
+  --
+  * description : text
+  * resource_type_id : number
+  * category_id : number
+  * language_id : number
+}
+
+entity pl {
+  * id : number <<generated>>
+  * name : text <<unique>>
+  --
+  * description : text
+  * level_id : number
+  * mode_execution_id : number
+}
+
+entity pl_resource_pl {
+  * id : number <<generated>>
+  * pl_id : number <<unique>>
+  * resource_id : number <<unique>>
+}
+
+pl }o--o| pl_level
+pl }o--o| pl_mode_execution
+
+pl_resource }o--o| pl_resource_type
+pl_resource }o--o| pl_category
+pl_resource }o--o| languages
+
+pl_resource_pl }o--o{ pl_resource
+pl_resource_pl }o--o{ pl
+@enduml

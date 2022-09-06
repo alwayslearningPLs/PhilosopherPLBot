@@ -1,0 +1,270 @@
+-- Execute this three line manually
+DROP DATABASE IF EXISTS pls;
+CREATE DATABASE pls;
+\c pls;
+
+-- General tables
+CREATE TABLE languages (
+  id SMALLINT GENERATED ALWAYS AS IDENTITY,
+  name TEXT NOT NULL UNIQUE,
+  PRIMARY KEY (id)
+);
+
+CREATE FUNCTION LANGUAGE_BY_NAME(language_name TEXT)
+  RETURNS INT
+  LANGUAGE PLPGSQL
+AS
+$$
+DECLARE
+  language_id INT;
+BEGIN
+  SELECT id
+  INTO language_id
+  FROM languages
+  WHERE name LIKE language_name;
+
+  RETURN language_id;
+END
+$$;
+
+INSERT INTO languages(name)
+VALUES
+  ('english'),
+  ('spanish');
+
+-- pl = Programming Language
+
+-- pl_level shows us the level at which programming languages operate.
+-- Low level is kinda to operate with bits/bytes more directly than high level.
+CREATE TABLE pl_level (
+  id SMALLINT GENERATED ALWAYS AS IDENTITY,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT NOT NULL,
+  PRIMARY KEY(id)
+);
+
+CREATE FUNCTION PL_LEVEL_BY_NAME(level_name TEXT)
+  RETURNS INT
+  LANGUAGE PLPGSQL
+AS
+$$
+DECLARE
+  level_id INT;
+BEGIN
+  SELECT id
+  INTO level_id
+  FROM pl_level
+  WHERE name LIKE level_name;
+
+  RETURN level_id;
+END
+$$;
+
+INSERT INTO pl_level(name, description)
+VALUES
+  ('high', 'A high-level programming language is a programming language with strong abstraction from the details of the computer.'),
+  ('low', 'A low-level programming language is a programming language that provides little or no abstraction from a computer instruction set architecture—commands or functions in the language map that are structurally similar to processor instructions.');
+
+-- pl_mode_execution defines how the pl executes on the machine.
+CREATE TABLE pl_mode_execution (
+  id SMALLINT GENERATED ALWAYS AS IDENTITY,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE FUNCTION PL_MODE_EXECUTION_BY_NAME(mode_execution_name TEXT)
+  RETURNS INT
+  LANGUAGE PLPGSQL
+AS
+$$
+DECLARE
+  mode_execution_id INT;
+BEGIN
+  SELECT id
+  INTO mode_execution_id
+  FROM pl_mode_execution
+  WHERE name LIKE mode_execution_name;
+
+  RETURN mode_execution_id;
+END
+$$;
+
+INSERT INTO pl_mode_execution (name, description)
+VALUES
+  ('compiled machine code generation', 'When code written in a language is compiled, its syntax is transformed into an executable form before running'),
+  ('compiled intermediate representations', 'When code written in a language is compiled to an intermediate representation, that representation can be optimized or saved for later execution without the need to re-read the source file. The intermediate representation is called bytecode.'),
+  ('interpreter', 'When code written in a language is interpreted, its syntax is read and then executed directly, with no compilation stage'),
+  ('source to source translated or transcompiled', 'Code written in a language may be translated into terms of a lower-level language for which native code compilers are already common.');
+
+-- pl_resource_type is the type of resource that the we have for a pl to study or learn more about it.
+CREATE TABLE pl_resource_type (
+  id SMALLINT GENERATED ALWAYS AS IDENTITY,
+  name TEXT NOT NULL UNIQUE,
+  PRIMARY KEY (id)
+);
+
+CREATE FUNCTION PL_RESOURCE_TYPE_BY_NAME(resource_type_name TEXT)
+  RETURNS INT
+  LANGUAGE PLPGSQL
+AS
+$$
+DECLARE
+  resource_type_id INT;
+BEGIN
+  SELECT id
+  INTO resource_type_id
+  FROM pl_resource_type
+  WHERE name LIKE resource_type_name;
+
+  RETURN resource_type_id;
+END
+$$;
+
+INSERT INTO pl_resource_type (name)
+VALUES
+  ('blog_post'),
+  ('book'),
+  ('course'),
+  ('video'),
+  ('image'),
+  ('general');
+
+-- pl_category
+CREATE TABLE pl_category (
+  id SMALLINT GENERATED ALWAYS AS IDENTITY,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT NOT NULL,
+  PRIMARY KEY (id)
+);
+
+CREATE FUNCTION PL_CATEGORY_BY_NAME(category_name TEXT)
+  RETURNS INT
+  LANGUAGE PLPGSQL
+AS
+$$
+DECLARE
+  category_id INT;
+BEGIN
+  SELECT id
+  INTO category_id
+  FROM pl_category
+  WHERE name LIKE category_name;
+
+  RETURN category_id;
+END
+$$;
+
+INSERT INTO pl_category (name, description)
+VALUES
+  ('concurrency', 'description of concurrency'),
+  ('basics', 'basics of the language'),
+  ('network', 'network related topics'),
+  ('os', 'os related topics'),
+  ('cli', 'cli relate topics');
+
+CREATE TABLE pl_resource (
+  id BIGINT GENERATED ALWAYS AS IDENTITY,
+  value TEXT NOT NULL UNIQUE,
+  description TEXT NOT NULL,
+  free BOOLEAN NOT NULL, -- This is very important xd
+  resource_type_id SMALLINT NOT NULL REFERENCES pl_resource_type(id),
+  category_id SMALLINT NOT NULL REFERENCES pl_category(id),
+  language_id SMALLINT NOT NULL REFERENCES languages(id),
+  PRIMARY KEY(id)
+);
+
+CREATE FUNCTION PL_RESOURCE_BY_VALUE(pl_resource_value TEXT)
+  RETURNS INT
+  LANGUAGE PLPGSQL
+AS
+$$
+DECLARE
+  pl_resource_id BIGINT;
+BEGIN
+  SELECT id
+  INTO pl_resource_id
+  FROM pl_resource
+  WHERE value LIKE pl_resource_value;
+
+  RETURN pl_resource_id;
+END
+$$;
+
+INSERT INTO pl_resource(value, description, free, resource_type_id, category_id, language_id)
+VALUES
+  (
+    'https://docs.rs/', 'Rust general documentation', 'true',
+    ( SELECT PL_RESOURCE_TYPE_BY_NAME('general') ),
+    ( SELECT PL_CATEGORY_BY_NAME('basics') ),
+    ( SELECT LANGUAGE_BY_NAME('english') )
+  ),
+  (
+    'https://developers.google.com/protocol-buffers/docs/gotutorial', 'Protocol buffers in go', 'true', 
+    ( SELECT PL_RESOURCE_TYPE_BY_NAME('general') ),
+    ( SELECT PL_CATEGORY_BY_NAME('basics') ),
+    ( SELECT LANGUAGE_BY_NAME('english') )
+  ),
+  (
+    'https://developers.google.com/protocol-buffers/docs/cpptutorial', 'Protocol buffers in cpp/c++', 'true',
+    ( SELECT PL_RESOURCE_TYPE_BY_NAME('general') ),
+    ( SELECT PL_CATEGORY_BY_NAME('network') ),
+    ( SELECT LANGUAGE_BY_NAME('english') )
+  );
+
+CREATE TABLE pl(
+  id SMALLINT GENERATED ALWAYS AS IDENTITY,
+  name TEXT NOT NULL UNIQUE,
+  description TEXT NOT NULL,
+  level_id SMALLINT NOT NULL REFERENCES pl_level(id) ON UPDATE CASCADE,
+  mode_execution_id SMALLINT NOT NULL REFERENCES pl_mode_execution(id) ON UPDATE CASCADE,
+  PRIMARY KEY(id)
+);
+
+CREATE FUNCTION PL_BY_NAME(pl_name TEXT)
+  RETURNS INT
+  LANGUAGE PLPGSQL
+AS
+$$
+DECLARE
+  pl_id INT;
+BEGIN
+  SELECT id
+  INTO pl_id
+  FROM pl
+  WHERE name like pl_name;
+
+  RETURN pl_id;
+END
+$$;
+
+INSERT INTO pl(name, description, level_id, mode_execution_id)
+VALUES
+  ('Rust', 'A language empowering everyone to build reliable and efficient software', 
+    (SELECT PL_LEVEL_BY_NAME('low')), (SELECT PL_MODE_EXECUTION_BY_NAME('compiled machine code generation'))),
+  ('Golang', 'Go is an open source programming language supported by Google',
+    (SELECT PL_LEVEL_BY_NAME('low')), (SELECT PL_MODE_EXECUTION_BY_NAME('compiled machine code generation'))),
+  ('C', 'C is a general-purpose computer programming language. It was created in the 1970s by Dennis Ritchie, and remains very widely used and influential', 
+    (SELECT PL_LEVEL_BY_NAME('low')), (SELECT PL_MODE_EXECUTION_BY_NAME('compiled machine code generation'))),
+  ('C++', 'C++ is a powerful general-purpose programming language. It can be used to develop operating systems, browsers, games, and so on. C++ supports different ways of programming like procedural, object-oriented, functional, and so on. This makes C++ powerful as well as flexible',
+    (SELECT PL_LEVEL_BY_NAME('low')), (SELECT PL_MODE_EXECUTION_BY_NAME('compiled machine code generation'))),
+  ('Elixir', 'Elixir is a dynamic, functional language for building scalable and maintainable applications',
+    (SELECT PL_LEVEL_BY_NAME('high')), (SELECT PL_MODE_EXECUTION_BY_NAME('compiled intermediate representations'))),
+  ('JavaScript', 'JavaScript is a programming language that is one of the core technologies of the World Wide Web, alongside HTML and CSS. JavaScript is a high-level, often just-in-time compiled language that conforms to the ECMAScript standard.[14] It has dynamic typing, prototype-based object-orientation, and first-class functions. It is multi-paradigm, supporting event-driven, functional, and imperative programming styles. It has application programming interfaces (APIs) for working with text, dates, regular expressions, standard data structures, and the Document Object Model (DOM)',
+    (SELECT PL_LEVEL_BY_NAME('high')), (SELECT PL_MODE_EXECUTION_BY_NAME('interpreter'))),
+  ('Python', 'Python is a high-level, general-purpose programming language. Its design philosophy emphasizes code readability with the use of significant indentation',
+    (SELECT PL_LEVEL_BY_NAME('high')), (SELECT PL_MODE_EXECUTION_BY_NAME('interpreter')));
+
+CREATE TABLE pl_resource_pl (
+  id BIGINT GENERATED ALWAYS AS IDENTITY,
+  pl_id SMALLINT NOT NULL REFERENCES pl(id) ON UPDATE CASCADE,
+  resource_id BIGINT NOT NULL REFERENCES pl_resource(id) ON UPDATE CASCADE,
+  PRIMARY KEY(id),
+  UNIQUE(id, resource_id)
+);
+
+INSERT INTO pl_resource_pl(pl_id, resource_id)
+VALUES
+  (( SELECT PL_BY_NAME('Rust') ), ( SELECT PL_RESOURCE_BY_VALUE('https://docs.rs/') )),
+  (( SELECT PL_BY_NAME('Golang') ), ( SELECT PL_RESOURCE_BY_VALUE('https://developers.google.com/protocol-buffers/docs/gotutorial') )),
+  (( SELECT PL_BY_NAME('C++') ), ( SELECT PL_RESOURCE_BY_VALUE('https://developers.google.com/protocol-buffers/docs/cpptutorial') ));
