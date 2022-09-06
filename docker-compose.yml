@@ -6,7 +6,7 @@ services:
     networks:
     - network_db
     volumes:
-    - volume_db
+    - volume_db:/var/lib/postgresql/data
     ports:
     - "5442:5432"
     environment:
