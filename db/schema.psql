@@ -34,9 +34,9 @@ VALUES
 
 -- pl = Programming Language
 
--- pl_level shows us the level at which programming languages operate.
+-- pl_levels shows us the level at which programming languages operate.
 -- Low level is kinda to operate with bits/bytes more directly than high level.
-CREATE TABLE pl_level (
+CREATE TABLE pl_levels (
   id SMALLINT GENERATED ALWAYS AS IDENTITY,
   name TEXT NOT NULL UNIQUE,
   description TEXT NOT NULL,
@@ -53,20 +53,20 @@ DECLARE
 BEGIN
   SELECT id
   INTO level_id
-  FROM pl_level
+  FROM pl_levels
   WHERE name LIKE level_name;
 
   RETURN level_id;
 END
 $$;
 
-INSERT INTO pl_level(name, description)
+INSERT INTO pl_levels(name, description)
 VALUES
   ('high', 'A high-level programming language is a programming language with strong abstraction from the details of the computer.'),
   ('low', 'A low-level programming language is a programming language that provides little or no abstraction from a computer instruction set architecture—commands or functions in the language map that are structurally similar to processor instructions.');
 
--- pl_mode_execution defines how the pl executes on the machine.
-CREATE TABLE pl_mode_execution (
+-- pl_mode_executions defines how the pl executes on the machine.
+CREATE TABLE pl_mode_executions (
   id SMALLINT GENERATED ALWAYS AS IDENTITY,
   name TEXT NOT NULL UNIQUE,
   description TEXT NOT NULL,
@@ -83,22 +83,22 @@ DECLARE
 BEGIN
   SELECT id
   INTO mode_execution_id
-  FROM pl_mode_execution
+  FROM pl_mode_executions
   WHERE name LIKE mode_execution_name;
 
   RETURN mode_execution_id;
 END
 $$;
 
-INSERT INTO pl_mode_execution (name, description)
+INSERT INTO pl_mode_executions (name, description)
 VALUES
   ('compiled machine code generation', 'When code written in a language is compiled, its syntax is transformed into an executable form before running'),
   ('compiled intermediate representations', 'When code written in a language is compiled to an intermediate representation, that representation can be optimized or saved for later execution without the need to re-read the source file. The intermediate representation is called bytecode.'),
   ('interpreter', 'When code written in a language is interpreted, its syntax is read and then executed directly, with no compilation stage'),
   ('source to source translated or transcompiled', 'Code written in a language may be translated into terms of a lower-level language for which native code compilers are already common.');
 
--- pl_resource_type is the type of resource that the we have for a pl to study or learn more about it.
-CREATE TABLE pl_resource_type (
+-- pl_resource_types is the type of resource that the we have for a pl to study or learn more about it.
+CREATE TABLE pl_resource_types (
   id SMALLINT GENERATED ALWAYS AS IDENTITY,
   name TEXT NOT NULL UNIQUE,
   PRIMARY KEY (id)
@@ -114,14 +114,14 @@ DECLARE
 BEGIN
   SELECT id
   INTO resource_type_id
-  FROM pl_resource_type
+  FROM pl_resource_types
   WHERE name LIKE resource_type_name;
 
   RETURN resource_type_id;
 END
 $$;
 
-INSERT INTO pl_resource_type (name)
+INSERT INTO pl_resource_types (name)
 VALUES
   ('blog_post'),
   ('book'),
@@ -130,8 +130,8 @@ VALUES
   ('image'),
   ('general');
 
--- pl_category
-CREATE TABLE pl_category (
+-- pl_categories
+CREATE TABLE pl_categories (
   id SMALLINT GENERATED ALWAYS AS IDENTITY,
   name TEXT NOT NULL UNIQUE,
   description TEXT NOT NULL,
@@ -148,14 +148,14 @@ DECLARE
 BEGIN
   SELECT id
   INTO category_id
-  FROM pl_category
+  FROM pl_categories
   WHERE name LIKE category_name;
 
   RETURN category_id;
 END
 $$;
 
-INSERT INTO pl_category (name, description)
+INSERT INTO pl_categories (name, description)
 VALUES
   ('concurrency', 'description of concurrency'),
   ('basics', 'basics of the language'),
@@ -163,13 +163,13 @@ VALUES
   ('os', 'os related topics'),
   ('cli', 'cli relate topics');
 
-CREATE TABLE pl_resource (
+CREATE TABLE pl_resources (
   id BIGINT GENERATED ALWAYS AS IDENTITY,
   value TEXT NOT NULL UNIQUE,
   description TEXT NOT NULL,
   free BOOLEAN NOT NULL, -- This is very important xd
-  resource_type_id SMALLINT NOT NULL REFERENCES pl_resource_type(id),
-  category_id SMALLINT NOT NULL REFERENCES pl_category(id),
+  resource_type_id SMALLINT NOT NULL REFERENCES pl_resource_types(id),
+  category_id SMALLINT NOT NULL REFERENCES pl_categories(id),
   language_id SMALLINT NOT NULL REFERENCES languages(id),
   PRIMARY KEY(id)
 );
@@ -183,15 +183,15 @@ DECLARE
   pl_resource_id BIGINT;
 BEGIN
   SELECT id
-  INTO pl_resource_id
-  FROM pl_resource
+  INTO pl_resource_id 
+  FROM pl_resources
   WHERE value LIKE pl_resource_value;
 
   RETURN pl_resource_id;
 END
 $$;
 
-INSERT INTO pl_resource(value, description, free, resource_type_id, category_id, language_id)
+INSERT INTO pl_resources(value, description, free, resource_type_id, category_id, language_id)
 VALUES
   (
     'https://docs.rs/', 'Rust general documentation', 'true',
@@ -202,7 +202,7 @@ VALUES
   (
     'https://developers.google.com/protocol-buffers/docs/gotutorial', 'Protocol buffers in go', 'true', 
     ( SELECT PL_RESOURCE_TYPE_BY_NAME('general') ),
-    ( SELECT PL_CATEGORY_BY_NAME('basics') ),
+    ( SELECT PL_CATEGORY_BY_NAME('network') ),
     ( SELECT LANGUAGE_BY_NAME('english') )
   ),
   (
@@ -212,12 +212,12 @@ VALUES
     ( SELECT LANGUAGE_BY_NAME('english') )
   );
 
-CREATE TABLE pl(
+CREATE TABLE pls(
   id SMALLINT GENERATED ALWAYS AS IDENTITY,
   name TEXT NOT NULL UNIQUE,
   description TEXT NOT NULL,
-  level_id SMALLINT NOT NULL REFERENCES pl_level(id) ON UPDATE CASCADE,
-  mode_execution_id SMALLINT NOT NULL REFERENCES pl_mode_execution(id) ON UPDATE CASCADE,
+  level_id SMALLINT NOT NULL REFERENCES pl_levels(id) ON UPDATE CASCADE,
+  mode_execution_id SMALLINT NOT NULL REFERENCES pl_mode_executions(id) ON UPDATE CASCADE,
   PRIMARY KEY(id)
 );
 
@@ -231,14 +231,14 @@ DECLARE
 BEGIN
   SELECT id
   INTO pl_id
-  FROM pl
+  FROM pls
   WHERE name like pl_name;
 
   RETURN pl_id;
 END
 $$;
 
-INSERT INTO pl(name, description, level_id, mode_execution_id)
+INSERT INTO pls(name, description, level_id, mode_execution_id)
 VALUES
   ('Rust', 'A language empowering everyone to build reliable and efficient software', 
     (SELECT PL_LEVEL_BY_NAME('low')), (SELECT PL_MODE_EXECUTION_BY_NAME('compiled machine code generation'))),
@@ -255,15 +255,15 @@ VALUES
   ('Python', 'Python is a high-level, general-purpose programming language. Its design philosophy emphasizes code readability with the use of significant indentation',
     (SELECT PL_LEVEL_BY_NAME('high')), (SELECT PL_MODE_EXECUTION_BY_NAME('interpreter')));
 
-CREATE TABLE pl_resource_pl (
+CREATE TABLE pl_resources_pl (
   id BIGINT GENERATED ALWAYS AS IDENTITY,
-  pl_id SMALLINT NOT NULL REFERENCES pl(id) ON UPDATE CASCADE,
-  resource_id BIGINT NOT NULL REFERENCES pl_resource(id) ON UPDATE CASCADE,
+  pl_id SMALLINT NOT NULL REFERENCES pls(id) ON UPDATE CASCADE,
+  resource_id BIGINT NOT NULL REFERENCES pl_resources(id) ON UPDATE CASCADE,
   PRIMARY KEY(id),
   UNIQUE(id, resource_id)
 );
 
-INSERT INTO pl_resource_pl(pl_id, resource_id)
+INSERT INTO pl_resources_pl(pl_id, resource_id)
 VALUES
   (( SELECT PL_BY_NAME('Rust') ), ( SELECT PL_RESOURCE_BY_VALUE('https://docs.rs/') )),
   (( SELECT PL_BY_NAME('Golang') ), ( SELECT PL_RESOURCE_BY_VALUE('https://developers.google.com/protocol-buffers/docs/gotutorial') )),
