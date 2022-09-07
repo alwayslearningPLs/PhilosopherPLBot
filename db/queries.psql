@@ -78,8 +78,18 @@ LEFT JOIN pl_resource_types AS rt ON r.resource_type_id = rt.id
 WHERE c.name LIKE 'network' AND p.name LIKE 'Golang';
 
 -- ####################################################
--- ########### pl_categories query templates ############
+-- ########### pl_categories query templates ##########
 -- ####################################################
 --
 -- Get all categories
-SELECT name FROM pl_categories;
+SELECT name FROM pl_categories ORDER BY name DESC;
+
+-- ####################################################
+-- ########### pl_resources query templates ###########
+-- ####################################################
+--
+-- Get all resources with resource type name, category name and language name
+SELECT r.value, r.description, rt.name AS resource_type_name, c.name AS category_name, l.name AS language_name
+FROM pl_resources AS r LEFT JOIN pl_resource_types AS rt ON r.resource_type_id = rt.id
+  LEFT JOIN pl_categories AS c ON r.category_id = c.id
+  LEFT JOIN languages AS l ON r.language_id = l.id;
