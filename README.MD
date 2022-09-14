@@ -1,5 +1,3 @@
----
-
 > `1. Instalacion de paquetes`
 **Tener en cuenta que se necesita de [NodeJS](https://nodejs.dev/) para ejecutar este proyecto**
 ```zsh
@@ -43,4 +41,4 @@ export enum Colors {
 npm run dev
 ```
 
----
+
